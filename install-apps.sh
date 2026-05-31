@@ -14,34 +14,52 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-echo -e "${BLUE}[*] Step 1: Adding official stable PPA for Flatpak...${NC}"
+echo -e "${BLUE}[*] Step 1: Adding PPAs and Official Repositories...${NC}"
 apt-get update
-apt-get install -y software-properties-common
+# Ensure curl and gpg are installed for adding repository keys
+apt-get install -y software-properties-common curl gpg
+
+# Flatpak and IBus-Bamboo
 add-apt-repository -y ppa:flatpak/stable
+add-apt-repository -y ppa:bamboo-engine/ibus-bamboo
 
-echo -e "${BLUE}[*] Step 2: Installing Flatpak and GNOME Software integration...${NC}"
+# Google Antigravity
+mkdir -p /etc/apt/keyrings
+curl -fsSL https://us-central1-apt.pkg.dev/doc/repo-signing-key.gpg | gpg --dearmor --yes -o /etc/apt/keyrings/antigravity-repo-key.gpg
+echo "deb [signed-by=/etc/apt/keyrings/antigravity-repo-key.gpg] https://us-central1-apt.pkg.dev/projects/antigravity-auto-updater-dev/ antigravity-debian main" | tee /etc/apt/sources.list.d/google_antigravity.list > /dev/null
+
+echo -e "${BLUE}[*] Step 2: Enabling 32-bit architecture and Multiverse for Steam and Wine...${NC}"
+dpkg --add-architecture i386
+add-apt-repository -y multiverse
+
+echo -e "${BLUE}[*] Step 3: Installing APT system packages and CLI tools...${NC}"
 apt-get update
-apt-get install -y flatpak gnome-software-plugin-flatpak
+# Core GUI dependencies and platforms
+apt-get install -y flatpak gnome-software-plugin-flatpak steam wine wine32 winbind ibus-bamboo antigravity
+# Requested system utilities and CLI tools
+apt-get install -y wireguard vim python3 htop grep curl bsdutils 7zip hostname gpg
 
-echo -e "${BLUE}[*] Step 3: Adding Flathub repository...${NC}"
+echo -e "${BLUE}[*] Step 4: Adding Flathub repository...${NC}"
 flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 
-echo -e "${BLUE}[*] Step 4: Installing applications from Flathub...${NC}"
+echo -e "${BLUE}[*] Step 5: Installing applications from Flathub...${NC}"
 
-# Array of applications to install
-# App Name -> Flatpak Application ID
+# Array of Flatpak applications to install
 declare -A APPS=(
     ["Firefox"]="org.mozilla.firefox"
     ["LibreOffice"]="org.libreoffice.LibreOffice"
     ["Telegram"]="org.telegram.desktop"
     ["TorrHunt"]="com.github.alexkdeveloper.torrhunt"
+    ["TradingView"]="com.tradingview.TradingView"
+    ["qBittorrent"]="org.qbittorrent.qBittorrent"
+    ["KeePassXC"]="org.keepassxc.KeePassXC"
+    ["VLC"]="org.videolan.VLC"
 )
 
 for app_name in "${!APPS[@]}"; do
     app_id="${APPS[$app_name]}"
     echo -e "${YELLOW}>> Installing $app_name ($app_id)...${NC}"
     
-    # We use -y to automatically say yes to any prompts during installation
     flatpak install -y flathub "$app_id"
     
     if [ $? -eq 0 ]; then
@@ -51,5 +69,22 @@ for app_name in "${!APPS[@]}"; do
     fi
 done
 
+echo -e "${BLUE}[*] Step 6: Downloading MetaTrader 5 setup file...${NC}"
+USER_HOME=$(getent passwd $SUDO_USER | cut -d: -f6)
+wget -O "$USER_HOME/Downloads/mt5setup.exe" "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
+chown $SUDO_USER:$SUDO_USER "$USER_HOME/Downloads/mt5setup.exe"
+
 echo -e "${GREEN}[✔] All installations complete!${NC}"
-echo -e "${YELLOW}[!] Note: Please restart your computer (or log out and back in) so that the newly installed Flatpak apps appear in your application launcher.${NC}"
+
+echo -e "${YELLOW}[!] MT5 INSTRUCTIONS:${NC}"
+echo -e "    The MT5 installer is in your Downloads folder. Run it as your normal user via terminal:"
+echo -e "    wine ~/Downloads/mt5setup.exe"
+
+echo -e "${YELLOW}[!] VIETNAMESE TYPING (BAMBOO):${NC}"
+echo -e "    After restarting your computer, go to Settings -> Keyboard -> Input Sources."
+echo -e "    Click 'Add Input Source', select 'Vietnamese', and choose 'Vietnamese (Bamboo)'."
+
+echo -e "${YELLOW}[!] ANTIGRAVITY:${NC}"
+echo -e "    Launch Antigravity from your application menu. You will need to sign in with your Google account on the first launch to initialize the AI agents."
+
+echo -e "${YELLOW}[!] RESTART NOTE: Please restart your computer now so all new apps and configurations load correctly.${NC}"
