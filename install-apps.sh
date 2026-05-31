@@ -14,20 +14,28 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-echo -e "${BLUE}[*] Step 1: Adding official PPAs (Flatpak and IBus-Bamboo)...${NC}"
+echo -e "${BLUE}[*] Step 1: Adding PPAs and Official Repositories...${NC}"
 apt-get update
-apt-get install -y software-properties-common
+# Ensure curl and gpg are installed for the Antigravity key
+apt-get install -y software-properties-common curl gpg
+
+# Flatpak and IBus-Bamboo
 add-apt-repository -y ppa:flatpak/stable
 add-apt-repository -y ppa:bamboo-engine/ibus-bamboo
+
+# Google Antigravity
+mkdir -p /etc/apt/keyrings
+curl -fsSL https://us-central1-apt.pkg.dev/doc/repo-signing-key.gpg | gpg --dearmor --yes -o /etc/apt/keyrings/antigravity-repo-key.gpg
+echo "deb [signed-by=/etc/apt/keyrings/antigravity-repo-key.gpg] https://us-central1-apt.pkg.dev/projects/antigravity-auto-updater-dev/ antigravity-debian main" | tee /etc/apt/sources.list.d/google_antigravity.list > /dev/null
 
 echo -e "${BLUE}[*] Step 2: Enabling 32-bit architecture and Multiverse for Steam and Wine...${NC}"
 dpkg --add-architecture i386
 add-apt-repository -y multiverse
 
-echo -e "${BLUE}[*] Step 3: Installing APT packages (Flatpak, Steam, Wine, IBus-Bamboo)...${NC}"
+echo -e "${BLUE}[*] Step 3: Installing APT packages...${NC}"
 apt-get update
-# winbind is included because MetaTrader 5 often requires it to connect to broker servers
-apt-get install -y flatpak gnome-software-plugin-flatpak steam wine wine32 winbind ibus-bamboo
+# Installing all system packages including the newly added antigravity
+apt-get install -y flatpak gnome-software-plugin-flatpak steam wine wine32 winbind ibus-bamboo antigravity
 
 echo -e "${BLUE}[*] Step 4: Adding Flathub repository...${NC}"
 flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
@@ -40,6 +48,8 @@ declare -A APPS=(
     ["LibreOffice"]="org.libreoffice.LibreOffice"
     ["Telegram"]="org.telegram.desktop"
     ["TorrHunt"]="com.github.alexkdeveloper.torrhunt"
+    ["TradingView"]="com.tradingview.TradingView"
+    ["qBittorrent"]="org.qbittorrent.qBittorrent"
 )
 
 for app_name in "${!APPS[@]}"; do
@@ -56,7 +66,6 @@ for app_name in "${!APPS[@]}"; do
 done
 
 echo -e "${BLUE}[*] Step 6: Downloading MetaTrader 5 setup file...${NC}"
-# Use SUDO_USER to find your real home directory instead of downloading to the root folder
 USER_HOME=$(getent passwd $SUDO_USER | cut -d: -f6)
 wget -O "$USER_HOME/Downloads/mt5setup.exe" "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
 chown $SUDO_USER:$SUDO_USER "$USER_HOME/Downloads/mt5setup.exe"
@@ -70,6 +79,8 @@ echo -e "    wine ~/Downloads/mt5setup.exe"
 echo -e "${YELLOW}[!] VIETNAMESE TYPING (BAMBOO):${NC}"
 echo -e "    After restarting your computer, go to Settings -> Keyboard -> Input Sources."
 echo -e "    Click 'Add Input Source', select 'Vietnamese', and choose 'Vietnamese (Bamboo)'."
-echo -e "    You can switch languages using Super+Space."
 
-echo -e "${YELLOW}[!] RESTART NOTE: Please restart your computer now so Steam, Flatpak apps, and Bamboo all load correctly.${NC}"
+echo -e "${YELLOW}[!] ANTIGRAVITY:${NC}"
+echo -e "    Launch Antigravity from your application menu. You will need to sign in with your Google account on the first launch to initialize the AI agents."
+
+echo -e "${YELLOW}[!] RESTART NOTE: Please restart your computer now so all new apps and configurations load correctly.${NC}"
