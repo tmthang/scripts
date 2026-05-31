@@ -16,7 +16,7 @@ fi
 
 echo -e "${BLUE}[*] Step 1: Adding PPAs and Official Repositories...${NC}"
 apt-get update
-# Ensure curl and gpg are installed for the Antigravity key
+# Ensure curl and gpg are installed for adding repository keys
 apt-get install -y software-properties-common curl gpg
 
 # Flatpak and IBus-Bamboo
@@ -32,10 +32,12 @@ echo -e "${BLUE}[*] Step 2: Enabling 32-bit architecture and Multiverse for Stea
 dpkg --add-architecture i386
 add-apt-repository -y multiverse
 
-echo -e "${BLUE}[*] Step 3: Installing APT packages...${NC}"
+echo -e "${BLUE}[*] Step 3: Installing APT system packages and CLI tools...${NC}"
 apt-get update
-# Installing all system packages including the newly added antigravity
+# Core GUI dependencies and platforms
 apt-get install -y flatpak gnome-software-plugin-flatpak steam wine wine32 winbind ibus-bamboo antigravity
+# Requested system utilities and CLI tools
+apt-get install -y wireguard vim python3 htop grep curl bsdutils 7zip hostname gpg
 
 echo -e "${BLUE}[*] Step 4: Adding Flathub repository...${NC}"
 flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
@@ -51,6 +53,7 @@ declare -A APPS=(
     ["TradingView"]="com.tradingview.TradingView"
     ["qBittorrent"]="org.qbittorrent.qBittorrent"
     ["KeePassXC"]="org.keepassxc.KeePassXC"
+    ["VLC"]="org.videolan.VLC"
 )
 
 for app_name in "${!APPS[@]}"; do
