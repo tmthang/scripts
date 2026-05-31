@@ -14,28 +14,28 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-echo -e "${BLUE}[*] Adding official stable PPA for Flatpak...${NC}"
+echo -e "${BLUE}[*] Step 1: Adding official stable PPA for Flatpak...${NC}"
 apt-get update
 apt-get install -y software-properties-common
 add-apt-repository -y ppa:flatpak/stable
 
-echo -e "${BLUE}[*] Installing Flatpak and GNOME Software integration...${NC}"
+echo -e "${BLUE}[*] Step 2: Installing Flatpak and GNOME Software integration...${NC}"
 apt-get update
 apt-get install -y flatpak gnome-software-plugin-flatpak
 
-echo -e "${BLUE}[*] Adding Flathub repository...${NC}"
+echo -e "${BLUE}[*] Step 3: Adding Flathub repository...${NC}"
 flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+
+echo -e "${BLUE}[*] Step 4: Installing applications from Flathub...${NC}"
 
 # Array of applications to install
 # App Name -> Flatpak Application ID
 declare -A APPS=(
-    ["LibreOffice"]="org.libreoffice.LibreOffice"
     ["Firefox"]="org.mozilla.firefox"
+    ["LibreOffice"]="org.libreoffice.LibreOffice"
     ["Telegram"]="org.telegram.desktop"
     ["TorrHunt"]="com.github.alexkdeveloper.torrhunt"
 )
-
-echo -e "${BLUE}[*] Installing applications from Flathub...${NC}"
 
 for app_name in "${!APPS[@]}"; do
     app_id="${APPS[$app_name]}"
