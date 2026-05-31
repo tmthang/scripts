@@ -50,6 +50,7 @@ declare -A APPS=(
     ["TorrHunt"]="com.github.alexkdeveloper.torrhunt"
     ["TradingView"]="com.tradingview.TradingView"
     ["qBittorrent"]="org.qbittorrent.qBittorrent"
+    ["KeePassXC"]="org.keepassxc.KeePassXC"
 )
 
 for app_name in "${!APPS[@]}"; do
