@@ -16,8 +16,8 @@ fi
 
 echo -e "${BLUE}[*] Step 1: Adding Official Repositories...${NC}"
 apt-get update
-# Ensure curl and gpg are installed for adding repository keys
-apt-get install -y software-properties-common curl gpg
+# Ensure curl, gpg, and git are installed
+apt-get install -y software-properties-common curl gpg git
 
 # Google Antigravity
 mkdir -p /etc/apt/keyrings
@@ -30,13 +30,28 @@ apt-get update
 # Core GUI dependencies, Unikey, and Antigravity
 apt-get install -y ibus-unikey antigravity
 
-# Requested system utilities and CLI tools
-# Note: '7zip' is the modern package for Ubuntu 22.04/24.04 (Linux Mint 21/22).
-apt-get install -y wireguard vim python3 htop grep curl bsdutils 7zip hostname gpg
+# Requested system utilities, CLI tools, Zsh, and Cheese (webcam)
+apt-get install -y wireguard vim python3 htop grep curl bsdutils 7zip hostname gpg zsh cheese
 
 echo -e "${BLUE}[*] Step 3: Installing Desktop Applications via APT...${NC}"
 # Installing standard applications that were previously handled by Flatpak
 apt-get install -y firefox libreoffice telegram-desktop qbittorrent keepassxc vlc
+
+echo -e "${BLUE}[*] Step 4: Installing Oh My Zsh and setting default shell...${NC}"
+if [ -n "$SUDO_USER" ]; then
+    USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+    
+    echo -e "${YELLOW}>> Installing Oh My Zsh for user: $SUDO_USER...${NC}"
+    # Run the Oh My Zsh installation script as the standard user, unattended
+    sudo -u "$SUDO_USER" sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    
+    echo -e "${YELLOW}>> Setting Zsh as the default shell for $SUDO_USER...${NC}"
+    chsh -s "$(which zsh)" "$SUDO_USER"
+    
+    echo -e "${GREEN}[✔] Oh My Zsh installed and default shell updated!${NC}"
+else
+    echo -e "${RED}[X] Could not determine the standard user. Skipping Oh My Zsh installation.${NC}"
+fi
 
 echo -e "${GREEN}[✔] All installations complete!${NC}"
 
@@ -53,4 +68,6 @@ echo -e "    - To install TradingView, download the official Linux .deb file fro
 echo -e "${YELLOW}[!] ANTIGRAVITY:${NC}"
 echo -e "    Launch Antigravity from your application menu. You will need to sign in with your Google account on the first launch to initialize the AI agents."
 
-echo -e "${YELLOW}[!] RESTART NOTE: Please restart your computer now so all new apps and configurations load correctly.${NC}"
+echo -e "${YELLOW}[!] ZSH NOTE: You will need to log out and log back in (or restart) for Zsh to become your active default shell.${NC}"
+
+echo -e "${YELLOW}[!] RESTART NOTE: Please restart your computer now so all new apps, the shell change, and configurations load correctly.${NC}"
